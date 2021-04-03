@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 // for firebase token
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./config/book-world-2e899-firebase-adminsdk-kce42-0275a202a4.json");
+const serviceAccount = require("./configs/book-world-2e899-firebase-adminsdk-kce42-0275a202a4.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
