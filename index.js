@@ -25,19 +25,47 @@ admin.initializeApp({
 // --------------------mongodb part started here--------------------
 
 const MongoClient = require('mongodb').MongoClient;
+const { ObjectId } = require('bson');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tnmnk.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 client.connect(err => {
-  const bookCollection = client.db("bookWorld").collection("books");
-  const userCollection = client.db("bookWorld").collection("users");
+  const bookCollection = client.db("newBookWorld").collection("books");
+  const adminCollection = client.db("newBookWorld").collection("admins");
+  const orderCollection = client.db("newBookWorld").collection("orders");
+  const reviewCollection = client.db("newBookWorld").collection("reviews");
 
   // add an order to the user database for a specific user from checkout
   app.post('/addOrder', (req, res) => {
     const newOrder = req.body;
-    userCollection.insertOne(newOrder)
+    orderCollection.insertOne(newOrder)
       .then(result => {
         res.send(result.insertedCount > 0);
+      })
+  })
+
+  // for getting all orders from the services database
+  app.get('/orders', (req, res) => {
+    orderCollection.find()
+      .toArray((err, items) => {
+        res.send(items);
+      })
+  })
+
+  // add a review to the database
+  app.post('/addReview', (req, res) => {
+    const newReview = req.body;
+    reviewCollection.insertOne(newReview)
+      .then(result => {
+        res.send(result.insertedCount > 0);
+      })
+  })
+
+  // for getting all reviews from the reviews database
+  app.get('/reviews', (req, res) => {
+    reviewCollection.find()
+      .toArray((err, items) => {
+        res.send(items);
       })
   })
 
@@ -58,8 +86,33 @@ client.connect(err => {
       })
   })
 
+  // for deleting a book to the books database
+  app.delete('/delete/:id', (req, res) => {
+    bookCollection.deleteOne({ _id: ObjectId(req.params.id) })
+      .then(result => {
+
+      })
+  })
+
+  // for getting all admins from the admins database
+  app.get('/admins', (req, res) => {
+    adminCollection.find()
+      .toArray((err, items) => {
+        res.send(items);
+      })
+  })
+
+  // for adding a new admin
+  app.post('/addAdmin', (req, res) => {
+    const newAdmin = req.body;
+    adminCollection.insertOne(newAdmin)
+      .then(result => {
+        res.send(result.insertedCount > 0);
+      })
+  })
+
   // for getting all orders of a specific user from orders
-  app.get('/orders', (req, res) => {
+  app.get('/myOrderList', (req, res) => {
     const bearer = req.headers.authorization;
     if (bearer && bearer.startsWith('Bearer ')) {
       const idToken = bearer.split(' ')[1];
@@ -69,9 +122,10 @@ client.connect(err => {
         .then((decodedToken) => {
           const tokenEmail = decodedToken.email;
           const queryEmail = req.query.email;
+          // console.log(queryEmail);
 
           if (tokenEmail == queryEmail) {
-            userCollection.find({ email: queryEmail })
+            orderCollection.find({ email: queryEmail })
               .toArray((error, documents) => {
                 res.status(200).send(documents);
               })
